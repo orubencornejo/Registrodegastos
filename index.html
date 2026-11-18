@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Registro de Gastos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      /* ===== Paleta y base ===== */
+      :root {
+        --fondo: #f4f6f3;
+        --superficie: #ffffff;
+        --superficie-2: #eef1ec;
+        --texto: #1c2420;
+        --texto-suave: #5a665e;
+        --borde: #d9dfd8;
+        --acento: #177245;
+        --acento-oscuro: #0f5a35;
+        --acento-suave: #e2f0e7;
+        --peligro: #b3352b;
+        --peligro-suave: #fbeae8;
+        --sombra: 0 1px 2px rgba(20, 40, 28, .06), 0 8px 24px rgba(20, 40, 28, .06);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fondo: #121613;
+          --superficie: #1b211d;
+          --superficie-2: #232a25;
+          --texto: #e8ede9;
+          --texto-suave: #9faca3;
+          --borde: #333d36;
+          --acento: #3fbf7f;
+          --acento-oscuro: #5fd598;
+          --acento-suave: #1e3328;
+          --peligro: #f08a80;
+          --peligro-suave: #3a2321;
+          --sombra: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--fondo);
+        color: var(--texto);
+        font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+        line-height: 1.5;
+      }
+      button, [role="button"], select, summary,
+      input:not([type="checkbox"], [type="radio"]) { min-height: 2.75rem; }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+      .contenedor { max-width: 880px; margin: 0 auto; padding: 28px 18px 64px; }
+
+      /* ===== Encabezado con el total ===== */
+      .encabezado { margin-bottom: 22px; }
+      .encabezado h1 {
+        font-size: clamp(1.7rem, 5vw, 2.3rem);
+        margin: 0 0 4px;
+        letter-spacing: -0.02em;
+      }
+      .encabezado p { margin: 0; color: var(--texto-suave); }
+      .tarjeta-total {
+        margin-top: 20px;
+        background: var(--acento);
+        color: #fff;
+        border-radius: 14px;
+        padding: 22px 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 40px;
+        align-items: flex-end;
+        justify-content: space-between;
+      }
+      @media (prefers-color-scheme: dark) {
+        .tarjeta-total { background: var(--acento-suave); color: var(--texto); }
+      }
+      .tarjeta-total .etiqueta {
+        font-size: .8rem;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        opacity: .85;
+      }
+      .tarjeta-total .monto-total {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: clamp(2.1rem, 7vw, 3rem);
+        font-weight: 600;
+        line-height: 1.1;
+      }
+      .tarjeta-total .detalle { font-size: .95rem; opacity: .9; }
+
+      /* ===== Tarjetas ===== */
+      .tarjeta {
+        background: var(--superficie);
+        border: 1px solid var(--borde);
+        border-radius: 14px;
+        box-shadow: var(--sombra);
+        padding: 22px;
+        margin-bottom: 22px;
+      }
+      .tarjeta h2 { font-size: 1.1rem; margin: 0 0 16px; letter-spacing: -0.01em; }
+
+      /* ===== Formulario ===== */
+      .formulario {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      @media (min-width: 640px) {
+        .formulario { grid-template-columns: 2fr 1fr 1fr 1fr auto; align-items: end; }
+      }
+      .campo label {
+        display: block;
+        font-size: .85rem;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .campo input, .campo select {
+        width: 100%;
+        font: inherit;
+        color: var(--texto);
+        background: var(--superficie);
+        border: 1px solid var(--borde);
+        border-radius: 9px;
+        padding: 10px 12px;
+      }
+      .campo input:focus, .campo select:focus {
+        outline: 2px solid var(--acento);
+        outline-offset: 1px;
+        border-color: var(--acento);
+      }
+      .boton-agregar {
+        font: inherit;
+        font-weight: 600;
+        background: var(--acento);
+        color: #fff;
+        border: none;
+        border-radius: 9px;
+        padding: 10px 22px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .boton-agregar:hover { background: var(--acento-oscuro); }
+      @media (prefers-color-scheme: dark) {
+        .boton-agregar { color: #0d1f15; }
+        .boton-agregar:hover { background: var(--acento); filter: brightness(1.1); }
+      }
+      .error {
+        display: none;
+        margin-top: 14px;
+        background: var(--peligro-suave);
+        color: var(--peligro);
+        border-radius: 9px;
+        padding: 10px 14px;
+        font-size: .92rem;
+        font-weight: 500;
+      }
+      .error.visible { display: block; }
+
+      /* ===== Resumen por categoría ===== */
+      .resumen { display: grid; gap: 10px; }
+      .resumen-vacio { color: var(--texto-suave); margin: 0; }
+      .fila-resumen {
+        display: grid;
+        grid-template-columns: 110px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        font-size: .95rem;
+      }
+      .fila-resumen .nombre { font-weight: 500; }
+      .barra {
+        height: 10px;
+        background: var(--superficie-2);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .barra > div {
+        height: 100%;
+        background: var(--acento);
+        border-radius: 99px;
+        transition: width .3s ease;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .barra > div { transition: none; }
+      }
+      .fila-resumen .monto { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .9rem; }
+
+      /* ===== Lista de gastos ===== */
+      .lista { list-style: none; margin: 0; padding: 0; }
+      .gasto {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 2px;
+        border-bottom: 1px solid var(--borde);
+      }
+      .gasto:last-child { border-bottom: none; }
+      .gasto .info { flex: 1; min-width: 0; }
+      .gasto .descripcion {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+      }
+      .gasto .meta { font-size: .85rem; color: var(--texto-suave); }
+      .gasto .monto {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-weight: 600;
+        font-size: 1.02rem;
+        white-space: nowrap;
+      }
+      .boton-borrar {
+        flex: none;
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        border: 1px solid var(--borde);
+        border-radius: 9px;
+        color: var(--texto-suave);
+        cursor: pointer;
+        font-size: 1.05rem;
+        line-height: 1;
+      }
+      .boton-borrar:hover {
+        background: var(--peligro-suave);
+        color: var(--peligro);
+        border-color: var(--peligro);
+      }
+      .vacio { text-align: center; padding: 26px 10px; color: var(--texto-suave); }
+      .vacio strong { display: block; color: var(--texto); font-size: 1.02rem; margin-bottom: 4px; }
+
+      /* ===== Sección: cómo funciona ===== */
+      .como-funciona details {
+        border: 1px solid var(--borde);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        background: var(--superficie);
+      }
+      .como-funciona summary {
+        cursor: pointer;
+        font-weight: 600;
+        padding: 6px 16px;
+        display: flex;
+        align-items: center;
+      }
+      .como-funciona .detalle-codigo { padding: 0 16px 16px; }
+      .como-funciona p { margin: 0 0 10px; color: var(--texto-suave); font-size: .95rem; }
+      .como-funciona p strong { color: var(--texto); }
+      pre {
+        margin: 0;
+        background: var(--superficie-2);
+        border-radius: 9px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: .82rem;
+        line-height: 1.55;
+      }
+      code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .9em; }
+    </style>
+  </head>
+  <body>
+    <main class="contenedor">
+
+      <!-- Encabezado: el total es lo primero que se ve -->
+      <header class="encabezado">
+        <h1>Registro de Gastos</h1>
+        <p>Apunta cada gasto y mira en qué se va tu dinero.</p>
+        <div class="tarjeta-total">
+          <div>
+            <div class="etiqueta">Total gastado</div>
+            <div class="monto-total" id="total">$0.00</div>
+          </div>
+          <div class="detalle" id="conteo">0 gastos registrados</div>
+        </div>
+      </header>
+
+      <!-- Formulario para agregar un gasto -->
+      <section class="tarjeta" aria-labelledby="titulo-formulario">
+        <h2 id="titulo-formulario">Agregar un gasto</h2>
+        <form class="formulario" id="formulario" novalidate>
+          <div class="campo">
+            <label for="descripcion">¿En qué gastaste?</label>
+            <input type="text" id="descripcion" placeholder="Ej. Súper de la semana" autocomplete="off" />
+          </div>
+          <div class="campo">
+            <label for="monto">Monto ($)</label>
+            <input type="number" id="monto" placeholder="0.00" min="0" step="0.01" inputmode="decimal" />
+          </div>
+          <div class="campo">
+            <label for="categoria">Categoría</label>
+            <select id="categoria">
+              <option>Comida</option>
+              <option>Transporte</option>
+              <option>Casa</option>
+              <option>Salud</option>
+              <option>Ocio</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="fecha">Fecha</label>
+            <input type="date" id="fecha" />
+          </div>
+          <button type="submit" class="boton-agregar">Agregar</button>
+        </form>
+        <p class="error" id="error" role="alert"></p>
+      </section>
+
+      <!-- Resumen por categoría -->
+      <section class="tarjeta" aria-labelledby="titulo-resumen">
+        <h2 id="titulo-resumen">Por categoría</h2>
+        <div class="resumen" id="resumen">
+          <p class="resumen-vacio">Cuando agregues gastos, aquí verás cuánto llevas en cada categoría.</p>
+        </div>
+      </section>
+
+      <!-- Lista de gastos -->
+      <section class="tarjeta" aria-labelledby="titulo-lista">
+        <h2 id="titulo-lista">Tus gastos</h2>
+        <ul class="lista" id="lista"></ul>
+        <div class="vacio" id="vacio">
+          <strong>Todavía no hay gastos</strong>
+          Agrega el primero con el formulario de arriba.
+        </div>
+      </section>
+
+      <!-- Cómo está hecha la app: la parte de la lección -->
+      <section class="como-funciona" aria-labelledby="titulo-codigo">
+        <h2 id="titulo-codigo" style="font-size:1.1rem; margin: 26px 0 12px;">Cómo está hecha esta app</h2>
+
+        <details>
+          <summary>1. La lista de gastos es un arreglo (array)</summary>
+          <div class="detalle-codigo">
+            <p>Todo vive en una sola variable: <strong><code>gastos</code></strong>. Cada gasto es un <strong>objeto</strong> con cuatro datos: descripción, monto, categoría y fecha. Agregar un gasto es tan simple como meter un objeto nuevo al arreglo con <code>push()</code>.</p>
+            <pre>var gastos = [];
+
+var nuevoGasto = {
+  descripcion: "Súper de la semana",
+  monto: 850.50,
+  categoria: "Comida",
+  fecha: "2026-11-17"
+};
+
+gastos.push(nuevoGasto);</pre>
+          </div>
+        </details>
+
+        <details>
+          <summary>2. El total se calcula recorriendo el arreglo</summary>
+          <div class="detalle-codigo">
+            <p>Un <strong>ciclo <code>for</code></strong> pasa por cada gasto y suma su monto. Cada vez que la lista cambia, se vuelve a calcular y se repinta la pantalla con la función <code>dibujar()</code>.</p>
+            <pre>function calcularTotal() {
+  var total = 0;
+  for (var i = 0; i &lt; gastos.length; i++) {
+    total = total + gastos[i].monto;
+  }
+  return total;
+}</pre>
+          </div>
+        </details>
+
+        <details>
+          <summary>3. El botón «Agregar» escucha un evento</summary>
+          <div class="detalle-codigo">
+            <p>JavaScript <strong>escucha</strong> lo que hace el usuario. Cuando envías el formulario, se dispara el evento <code>submit</code>: la app lee los campos, valida que no estén vacíos y agrega el gasto.</p>
+            <pre>formulario.addEventListener("submit", function (evento) {
+  evento.preventDefault(); // evita que la página se recargue
+  // leer los campos, validar y agregar el gasto…
+});</pre>
+          </div>
+        </details>
+      </section>
+
+    </main>
+
+    <script>
+      // ============================================================
+      //  REGISTRO DE GASTOS — la lógica de la app
+      //  Todo el estado vive en un solo arreglo: "gastos".
+      //  Cada gasto es un objeto: { descripcion, monto, categoria, fecha }
+      // ============================================================
+
+      var gastos = [];
+
+      // Referencias a los elementos de la página (el "DOM")
+      var formulario  = document.getElementById("formulario");
+      var campoDesc   = document.getElementById("descripcion");
+      var campoMonto  = document.getElementById("monto");
+      var campoCat    = document.getElementById("categoria");
+      var campoFecha  = document.getElementById("fecha");
+      var mensajeError = document.getElementById("error");
+      var lista       = document.getElementById("lista");
+      var vacio       = document.getElementById("vacio");
+      var totalEl     = document.getElementById("total");
+      var conteoEl    = document.getElementById("conteo");
+      var resumenEl   = document.getElementById("resumen");
+
+      // La fecha de hoy como valor inicial del campo de fecha
+      var hoyISO = new Date().toISOString().slice(0, 10);
+      campoFecha.value = hoyISO;
+
+      // Da formato de dinero: 1234.5  ->  "$1,234.50"
+      function formatoDinero(numero) {
+        return "$" + numero.toLocaleString("es-MX", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+
+      // Da formato legible a la fecha: "2026-11-17" -> "17 nov 2026"
+      function formatoFecha(iso) {
+        var partes = iso.split("-");
+        var fecha = new Date(partes[0], partes[1] - 1, partes[2]);
+        return fecha.toLocaleDateString("es-MX", {
+          day: "numeric", month: "short", year: "numeric"
+        });
+      }
+
+      // Suma los montos de todos los gastos
+      function calcularTotal() {
+        var total = 0;
+        for (var i = 0; i < gastos.length; i++) {
+          total = total + gastos[i].monto;
+        }
+        return total;
+      }
+
+      // Suma los montos agrupados por categoría
+      function totalesPorCategoria() {
+        var totales = {};
+        for (var i = 0; i < gastos.length; i++) {
+          var cat = gastos[i].categoria;
+          if (!totales[cat]) totales[cat] = 0;
+          totales[cat] = totales[cat] + gastos[i].monto;
+        }
+        return totales;
+      }
+
+      // Repinta toda la pantalla a partir del arreglo "gastos"
+      function dibujar() {
+        // 1) Total y conteo
+        var total = calcularTotal();
+        totalEl.textContent = formatoDinero(total);
+        conteoEl.textContent = gastos.length === 1
+          ? "1 gasto registrado"
+          : gastos.length + " gastos registrados";
+
+        // 2) Lista de gastos (del más reciente al más viejo)
+        lista.innerHTML = "";
+        vacio.style.display = gastos.length === 0 ? "block" : "none";
+        for (var i = gastos.length - 1; i >= 0; i--) {
+          lista.appendChild(crearElementoGasto(gastos[i], i));
+        }
+
+        // 3) Resumen por categoría, de mayor a menor
+        var totales = totalesPorCategoria();
+        var categorias = Object.keys(totales).sort(function (a, b) {
+          return totales[b] - totales[a];
+        });
+        resumenEl.innerHTML = "";
+        if (categorias.length === 0) {
+          resumenEl.innerHTML = '<p class="resumen-vacio">Cuando agregues gastos, aquí verás cuánto llevas en cada categoría.</p>';
+          return;
+        }
+        for (var j = 0; j < categorias.length; j++) {
+          var nombre = categorias[j];
+          var porcentaje = total > 0 ? (totales[nombre] / total) * 100 : 0;
+
+          var fila = document.createElement("div");
+          fila.className = "fila-resumen";
+
+          var spanNombre = document.createElement("span");
+          spanNombre.className = "nombre";
+          spanNombre.textContent = nombre;
+
+          var barra = document.createElement("div");
+          barra.className = "barra";
+          var relleno = document.createElement("div");
+          relleno.style.width = porcentaje + "%";
+          barra.appendChild(relleno);
+
+          var spanMonto = document.createElement("span");
+          spanMonto.className = "monto";
+          spanMonto.textContent = formatoDinero(totales[nombre]);
+
+          fila.appendChild(spanNombre);
+          fila.appendChild(barra);
+          fila.appendChild(spanMonto);
+          resumenEl.appendChild(fila);
+        }
+      }
+
+      // Crea el renglón visual de un gasto, con su botón de borrar
+      function crearElementoGasto(gasto, indice) {
+        var li = document.createElement("li");
+        li.className = "gasto";
+
+        var info = document.createElement("div");
+        info.className = "info";
+
+        var desc = document.createElement("div");
+        desc.className = "descripcion";
+        desc.textContent = gasto.descripcion;
+
+        var meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = gasto.categoria + " · " + formatoFecha(gasto.fecha);
+
+        info.appendChild(desc);
+        info.appendChild(meta);
+
+        var monto = document.createElement("div");
+        monto.className = "monto";
+        monto.textContent = formatoDinero(gasto.monto);
+
+        var boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "boton-borrar";
+        boton.textContent = "✕";
+        boton.setAttribute("aria-label", "Borrar gasto: " + gasto.descripcion);
+        boton.addEventListener("click", function () {
+          borrarGasto(indice);
+        });
+
+        li.appendChild(info);
+        li.appendChild(monto);
+        li.appendChild(boton);
+        return li;
+      }
+
+      // Quita un gasto del arreglo y repinta
+      function borrarGasto(indice) {
+        gastos.splice(indice, 1);
+        dibujar();
+      }
+
+      // Muestra u oculta el mensaje de error del formulario
+      function mostrarError(texto) {
+        mensajeError.textContent = texto;
+        mensajeError.className = texto ? "error visible" : "error";
+      }
+
+      // Evento principal: enviar el formulario agrega un gasto
+      formulario.addEventListener("submit", function (evento) {
+        evento.preventDefault(); // la página no se recarga
+
+        var descripcion = campoDesc.value.trim();
+        var monto = parseFloat(campoMonto.value);
+
+        // Validación: descripción escrita y monto mayor que cero
+        if (descripcion === "") {
+          mostrarError("Escribe en qué gastaste (el campo de descripción está vacío).");
+          campoDesc.focus();
+          return;
+        }
+        if (isNaN(monto) || monto <= 0) {
+          mostrarError("Escribe un monto válido, mayor que cero.");
+          campoMonto.focus();
+          return;
+        }
+
+        mostrarError("");
+        gastos.push({
+          descripcion: descripcion,
+          monto: monto,
+          categoria: campoCat.value,
+          fecha: campoFecha.value || hoyISO
+        });
+
+        // Limpia los campos de texto y deja lista la app para el siguiente gasto
+        campoDesc.value = "";
+        campoMonto.value = "";
+        campoDesc.focus();
+
+        dibujar();
+      });
+
+      // Primera pintura: la app arranca vacía
+      dibujar();
+    </script>
+  </body>
+</html>
